@@ -1,26 +1,121 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+  AutoVector Visualizer — "compiler laboratory" theme.
+  Dark-first and, deliberately, dark-only: this is a diagnostic tool for
+  reading IR and pass/fail states, not a marketing surface. High-contrast
+  green/red for pass/fail, thin 1px borders instead of shadows, minimal
+  gradients.
+*/
+:root {
+  --background: #0a0c10;
+  --foreground: #e7eaf0;
+  --card: #12151c;
+  --card-foreground: #e7eaf0;
+  --popover: #12151c;
+  --popover-foreground: #e7eaf0;
+  --primary: #67e8f9;
+  --primary-foreground: #06232a;
+  --secondary: #1a1f29;
+  --secondary-foreground: #e7eaf0;
+  --muted: #151920;
+  --muted-foreground: #8b93a3;
+  --accent: #1a1f29;
+  --accent-foreground: #e7eaf0;
+  --destructive: #f87171;
+  --destructive-foreground: #2a0a0a;
+  --success: #4ade80;
+  --success-foreground: #052e14;
+  --border: #232833;
+  --input: #232833;
+  --ring: #67e8f9;
+  --radius: 0.5rem;
+}
+
+/* This app ships one theme only; .dark mirrors :root so any component that
+   toggles the `dark` class (e.g. via radix state) keeps the same palette. */
+.dark {
+  --background: #0a0c10;
+  --foreground: #e7eaf0;
+  --card: #12151c;
+  --card-foreground: #e7eaf0;
+  --popover: #12151c;
+  --popover-foreground: #e7eaf0;
+  --primary: #67e8f9;
+  --primary-foreground: #06232a;
+  --secondary: #1a1f29;
+  --secondary-foreground: #e7eaf0;
+  --muted: #151920;
+  --muted-foreground: #8b93a3;
+  --accent: #1a1f29;
+  --accent-foreground: #e7eaf0;
+  --destructive: #f87171;
+  --destructive-foreground: #2a0a0a;
+  --success: #4ade80;
+  --success-foreground: #052e14;
+  --border: #232833;
+  --input: #232833;
+  --ring: #67e8f9;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Subtle grid backdrop used behind the hero / input section to read as a
+   "compiler lab" rather than a generic SaaS page. Applied via a utility
+   class rather than globally, so it stays intentional. */
+.lab-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
