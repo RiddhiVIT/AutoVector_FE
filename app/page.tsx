@@ -20,12 +20,13 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { analyzeLoop } from "@/lib/api";
 import { EXAMPLES } from "@/lib/examples";
-import type { AnalyzeResponse, InputType, UiStatus } from "@/lib/types";
+import type { AnalyzeResponse, EditorMode, InputType, UiStatus } from "@/lib/types";
 
 interface State {
   status: UiStatus;
-  inputType: InputType;
+  inputType: EditorMode;
   cLikeSource: string;
+  pythonSource: string;
   toyIrSource: string;
   vectorWidth: number;
   response: AnalyzeResponse | null;
@@ -34,9 +35,9 @@ interface State {
 
 type Action =
   | { type: "SET_SOURCE"; value: string }
-  | { type: "SET_INPUT_TYPE"; value: InputType }
+  | { type: "SET_INPUT_TYPE"; value: EditorMode }
   | { type: "SET_VECTOR_WIDTH"; value: number }
-  | { type: "LOAD_EXAMPLE"; cLike: string; toyIr: string }
+  | { type: "LOAD_EXAMPLE"; cLike: string; python: string; toyIr: string }
   | { type: "ANALYZE_START" }
   | { type: "ANALYZE_DONE"; response: AnalyzeResponse }
   | { type: "ANALYZE_ERROR"; message: string }
@@ -48,6 +49,7 @@ const initialState: State = {
   status: "initial",
   inputType: "c-like",
   cLikeSource: DEFAULT_EXAMPLE.cLike,
+  pythonSource: DEFAULT_EXAMPLE.python,
   toyIrSource: DEFAULT_EXAMPLE.toyIr,
   vectorWidth: 4,
   response: null,
@@ -56,18 +58,47 @@ const initialState: State = {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "SET_SOURCE":
-      return state.inputType === "c-like"
-        ? { ...state, cLikeSource: action.value }
-        : { ...state, toyIrSource: action.value };
+    case "SET_SOURCE": {
+      const updatedState =
+        state.inputType === "c-like"
+          ? { ...state, cLikeSource: action.value }
+          : state.inputType === "python"
+            ? { ...state, pythonSource: action.value }
+            : { ...state, toyIrSource: action.value };
+      return {
+        ...updatedState,
+        status: "initial",
+        response: null,
+        errorMessage: null,
+      };
+    }
     case "SET_INPUT_TYPE":
-      return { ...state, inputType: action.value };
+      return {
+        ...state,
+        inputType: action.value,
+        status: "initial",
+        response: null,
+        errorMessage: null,
+      };
     case "SET_VECTOR_WIDTH":
       return { ...state, vectorWidth: action.value };
     case "LOAD_EXAMPLE":
-      return { ...state, cLikeSource: action.cLike, toyIrSource: action.toyIr };
+      return {
+        ...state,
+        cLikeSource: action.cLike,
+        pythonSource: action.python,
+        toyIrSource: action.toyIr,
+        status: "initial",
+        response: null,
+        errorMessage: null,
+      };
     case "ANALYZE_START":
-      return { ...state, status: "analyzing", errorMessage: null };
+      return {
+        ...state,
+        status: "analyzing",
+        response: null,
+        errorMessage: null,
+      };
     case "ANALYZE_DONE": {
       const r = action.response;
       if (!r.success) {
@@ -115,15 +146,22 @@ function statusAnnouncement(status: UiStatus, errorMessage: string | null): stri
 
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const source = state.inputType === "c-like" ? state.cLikeSource : state.toyIrSource;
+  const source =
+    state.inputType === "c-like"
+      ? state.cLikeSource
+      : state.inputType === "python"
+        ? state.pythonSource
+        : state.toyIrSource;
+  const analysisSource = state.inputType === "python" ? state.cLikeSource : source;
+  const analysisInputType: InputType = state.inputType === "python" ? "c-like" : state.inputType;
 
   const runAnalysis = useCallback(async () => {
     dispatch({ type: "ANALYZE_START" });
     try {
       const response = await analyzeLoop({
-        source,
+        source: analysisSource,
         vectorWidth: state.vectorWidth,
-        inputType: state.inputType,
+        inputType: analysisInputType,
       });
       dispatch({ type: "ANALYZE_DONE", response });
     } catch {
@@ -132,12 +170,17 @@ export default function Page() {
         message: "Compiler service unavailable. Try again.",
       });
     }
-  }, [source, state.vectorWidth, state.inputType]);
+  }, [analysisInputType, analysisSource, state.inputType, state.vectorWidth]);
 
   const handleExampleSelect = useCallback((id: string) => {
     const example = EXAMPLES.find((e) => e.id === id);
     if (example) {
-      dispatch({ type: "LOAD_EXAMPLE", cLike: example.cLike, toyIr: example.toyIr });
+      dispatch({
+        type: "LOAD_EXAMPLE",
+        cLike: example.cLike,
+        python: example.python,
+        toyIr: example.toyIr,
+      });
     }
   }, []);
 
@@ -180,7 +223,7 @@ export default function Page() {
                 type="single"
                 value={state.inputType}
                 onValueChange={(v) => {
-                  if (v) dispatch({ type: "SET_INPUT_TYPE", value: v as InputType });
+                  if (v) dispatch({ type: "SET_INPUT_TYPE", value: v as EditorMode });
                 }}
                 aria-label="Input mode"
                 className="font-mono"
@@ -191,6 +234,9 @@ export default function Page() {
                 <ToggleGroupItem value="toy-ir" aria-label="Toy IR input mode">
                   Toy IR
                 </ToggleGroupItem>
+                <ToggleGroupItem value="python" aria-label="Python example view">
+                  Python
+                </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
@@ -198,7 +244,7 @@ export default function Page() {
               value={source}
               onChange={(value) => dispatch({ type: "SET_SOURCE", value })}
               inputType={state.inputType}
-              disabled={state.status === "analyzing"}
+              disabled={state.status === "analyzing" || state.inputType === "python"}
             />
 
             <div className="flex flex-wrap items-end justify-between gap-6">
