@@ -2,12 +2,13 @@
 
 import CodeMirror from "@uiw/react-codemirror";
 import { cpp } from "@codemirror/lang-cpp";
-import type { InputType } from "@/lib/types";
+import { python } from "@codemirror/lang-python";
+import type { EditorMode } from "@/lib/types";
 
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  inputType: InputType;
+  inputType: EditorMode;
   disabled?: boolean;
 }
 
@@ -18,7 +19,7 @@ export function CodeEditor({ value, onChange, inputType, disabled }: CodeEditorP
         value={value}
         height="240px"
         theme="dark"
-        extensions={inputType === "c-like" ? [cpp()] : []}
+        extensions={inputType === "c-like" ? [cpp()] : inputType === "python" ? [python()] : []}
         onChange={onChange}
         editable={!disabled}
         basicSetup={{
@@ -32,7 +33,9 @@ export function CodeEditor({ value, onChange, inputType, disabled }: CodeEditorP
         aria-label={
           inputType === "c-like"
             ? "C-like loop source editor"
-            : "Toy IR source editor"
+            : inputType === "python"
+              ? "Python example viewer"
+              : "Toy IR source editor"
         }
       />
     </div>

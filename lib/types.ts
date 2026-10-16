@@ -6,6 +6,7 @@
  */
 
 export type InputType = "c-like" | "toy-ir" | "json";
+export type EditorMode = InputType | "python";
 
 export interface AnalyzeRequest {
   source: string;
